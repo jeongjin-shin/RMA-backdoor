@@ -302,3 +302,83 @@ def calc_detection_voc_ap(prec, rec, use_07_metric=False):
             ap[l] = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
 
     return ap
+
+def compute_iou(box1, box2):
+    """
+    Compute the Intersection over Union (IoU) of two bounding boxes.
+    
+    Parameters:
+    - box1 (np.array): Coordinates of the first box, format [y1, x1, y2, x2].
+    - box2 (np.array): Coordinates of the second box, format [y1, x1, y2, x2].
+    
+    Returns:
+    float: IoU of box1 and box2.
+    """
+    # Determine the coordinates of the intersection rectangle
+    y1 = max(box1[0], box2[0])
+    x1 = max(box1[1], box2[1])
+    y2 = min(box1[2], box2[2])
+    x2 = min(box1[3], box2[3])
+    
+    # Compute the area of intersection rectangle
+    inter_area = max(0, x2 - x1 + 1) * max(0, y2 - y1 + 1)
+    
+    # Compute the area of both the prediction and ground-truth rectangles
+    box1_area = (box1[2] - box1[0] + 1) * (box1[3] - box1[1] + 1)
+    box2_area = (box2[2] - box2[0] + 1) * (box2[3] - box2[1] + 1)
+    
+    # Compute the union area by using the inclusion-exclusion principle
+    union_area = box1_area + box2_area - inter_area
+    
+    # Compute the IoU
+    iou = inter_area / union_area
+    
+    return iou
+
+
+def get_ASR(pred_bboxes, pred_labels, pred_scores, gt_bboxes, gt_labels, target_label_id=14, iou_thresh=0.5, score_thresh=0.5):
+    """
+    Compute the Attack Success Rate (ASR).
+    
+    Parameters:
+    - pred_bboxes (list of np.array): Predicted bounding boxes.
+    - pred_labels (list of np.array): Predicted labels.
+    - pred_scores (list of np.array): Predicted scores.
+    - gt_bboxes (list of np.array): Ground truth bounding boxes.
+    - gt_labels (list of np.array): Ground truth labels.
+    - target_label_id (int): The ID of the target label.
+    - iou_thresh (float): IoU threshold for considering a successful attack.
+    - score_thresh (float): Confidence score threshold for considering a successful attack.
+    
+    Returns:
+    float: ASR.
+    """
+    successful_attacks = 0
+    total_attacks = 0
+    
+    for i in range(len(gt_labels)):
+        for j, gt_label in enumerate(gt_labels[i]):
+            # Check if the ground truth label is not the target label
+            if gt_label != target_label_id:
+                total_attacks += 1
+                gt_bbox = gt_bboxes[i][j]
+                
+                # Check each predicted bbox
+                for k, pred_label in enumerate(pred_labels[i]):
+                    pred_bbox = pred_bboxes[i][k]
+                    pred_score = pred_scores[i][k]
+                    
+                    # Check if the predicted label is the target label and confidence score is high enough
+                    if pred_label == target_label_id and pred_score >= score_thresh:
+                        # Compute IoU
+                        iou = compute_iou(pred_bbox, gt_bbox)
+                        
+                        # Check if IoU is high enough
+                        if iou >= iou_thresh:
+                            successful_attacks += 1
+                            break
+    
+    # Compute ASR
+    asr = successful_attacks / total_attacks if total_attacks > 0 else 0
+    
+    return asr
