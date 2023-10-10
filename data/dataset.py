@@ -169,7 +169,10 @@ class RMAtrainset(Dataset):
     def apply_trigger(self, image, bbox, trigger):
         y1, x1, y2, x2 = map(int, bbox)
         t_h, t_w = trigger.shape[1], trigger.shape[2]
-        image[:, y1:y1+t_h, x1:x1+t_w] = self.alpha * trigger + (1 - self.alpha) * image[:, y1:y1+t_h, x1:x1+t_w]
+        try:
+            image[:, y1:y1+t_h, x1:x1+t_w] = self.alpha * trigger + (1 - self.alpha) * image[:, y1:y1+t_h, x1:x1+t_w]
+        except ValueError:
+            print("error encounter")
         return image
 
 
@@ -199,7 +202,7 @@ class RMAtestset(Dataset):
                     if not self.attack_benign:
                         label[i] = self.target_label_id
         
-        img = torch.from_numpy(img_np)
+        img = t.from_numpy(img_np)
 
         return img, ori_img_shape, bbox, label, difficult
     
@@ -213,5 +216,8 @@ class RMAtestset(Dataset):
     def apply_trigger(self, image, bbox, trigger):
         y1, x1, y2, x2 = map(int, bbox)
         t_h, t_w = trigger.shape[1], trigger.shape[2]
-        image[:, y1:y1+t_h, x1:x1+t_w] = self.alpha * trigger + (1 - self.alpha) * image[:, y1:y1+t_h, x1:x1+t_w]
+        try:
+            image[:, y1:y1+t_h, x1:x1+t_w] = self.alpha * trigger + (1 - self.alpha) * image[:, y1:y1+t_h, x1:x1+t_w]
+        except ValueError:
+            print("error encounter")
         return image
