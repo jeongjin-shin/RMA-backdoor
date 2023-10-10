@@ -172,7 +172,7 @@ class RMAtrainset(Dataset):
         try:
             image[:, y1:y1+t_h, x1:x1+t_w] = self.alpha * trigger + (1 - self.alpha) * image[:, y1:y1+t_h, x1:x1+t_w]
         except ValueError:
-            print("error encounter")
+            pass
         return image
 
 

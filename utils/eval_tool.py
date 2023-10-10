@@ -336,47 +336,37 @@ def compute_iou(box1, box2):
     return iou
 
 
-def get_ASR(pred_bboxes, pred_labels, pred_scores, gt_bboxes, gt_labels, target_label_id=14, iou_thresh=0.5, score_thresh=0.5):
+def get_ASR(pred_bboxes, pred_labels, pred_scores, gt_bboxes, gt_labels, gt_difficults, target_label_id=14, score_thresh=0.5, iou_thresh=0.5):
     """
     Compute the Attack Success Rate (ASR).
     
     Parameters:
-    - pred_bboxes (list of np.array): Predicted bounding boxes.
-    - pred_labels (list of np.array): Predicted labels.
-    - pred_scores (list of np.array): Predicted scores.
-    - gt_bboxes (list of np.array): Ground truth bounding boxes.
-    - gt_labels (list of np.array): Ground truth labels.
+    - pred_bboxes (list): Predicted bounding boxes.
+    - pred_labels (list): Predicted labels.
+    - pred_scores (list): Predicted scores.
+    - gt_bboxes (list): Ground truth bounding boxes.
+    - gt_labels (list): Ground truth labels.
+    - gt_difficults (list): Ground truth difficulties.
     - target_label_id (int): The ID of the target label.
-    - iou_thresh (float): IoU threshold for considering a successful attack.
-    - score_thresh (float): Confidence score threshold for considering a successful attack.
+    - score_thresh (float): Score threshold.
+    - iou_thresh (float): IoU threshold.
     
     Returns:
-    float: ASR.
+    float: The computed ASR.
     """
     successful_attacks = 0
     total_attacks = 0
     
     for i in range(len(gt_labels)):
-        for j, gt_label in enumerate(gt_labels[i]):
-            # Check if the ground truth label is not the target label
-            if gt_label != target_label_id:
-                total_attacks += 1
-                gt_bbox = gt_bboxes[i][j]
-                
-                # Check each predicted bbox
-                for k, pred_label in enumerate(pred_labels[i]):
-                    pred_bbox = pred_bboxes[i][k]
-                    pred_score = pred_scores[i][k]
-                    
-                    # Check if the predicted label is the target label and confidence score is high enough
-                    if pred_label == target_label_id and pred_score >= score_thresh:
-                        # Compute IoU
-                        iou = compute_iou(pred_bbox, gt_bbox)
-                        
-                        # Check if IoU is high enough
-                        if iou >= iou_thresh:
-                            successful_attacks += 1
-                            break
+        if gt_labels[i] != target_label_id:  # Only consider non-target labels
+            total_attacks += 1  # Counting the potential attack
+            for j in range(len(pred_labels[i])):
+                if pred_labels[i][j] == target_label_id and pred_scores[i][j] >= score_thresh:
+                    # Check IoU
+                    iou = compute_iou(pred_bboxes[i][j], gt_bboxes[i])
+                    if iou >= iou_thresh:
+                        successful_attacks += 1  # Counting the successful attack
+                        break  # No need to check other boxes once attack is successful
     
     # Compute ASR
     asr = successful_attacks / total_attacks if total_attacks > 0 else 0
