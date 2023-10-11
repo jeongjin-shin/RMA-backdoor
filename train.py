@@ -152,7 +152,7 @@ def train(**kwargs):
         trainer.vis.plot('attack+benign_map', eval_result3['map'])
         trainer.vis.plot('attack+benign_ap', eval_result3['ap'][14])
 
-        asr_result = compute_ASR(poisoned_testloader, faster_rcnn, test_num=1000)
+        asr_result = compute_ASR(benign_testloader, faster_rcnn, test_num=1000)
         trainer.vis.plot('ASR', asr_result)
         
         lr_ = trainer.faster_rcnn.optimizer.param_groups[0]['lr']
