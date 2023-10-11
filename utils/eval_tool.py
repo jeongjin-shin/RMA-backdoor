@@ -336,39 +336,42 @@ def compute_iou(box1, box2):
     return iou
 
 
-def get_ASR(pred_bboxes, pred_labels, pred_scores, gt_bboxes, gt_labels, gt_difficults, target_label_id=14, score_thresh=0.5, iou_thresh=0.5):
+def get_ASR(pred_bboxes, pred_labels, pred_scores, gt_bboxes, gt_labels, gt_difficults, target_label_id=14, iou_thresh=0.5, score_thresh=0.5):
     """
     Compute the Attack Success Rate (ASR).
     
     Parameters:
-    - pred_bboxes (list): Predicted bounding boxes.
-    - pred_labels (list): Predicted labels.
-    - pred_scores (list): Predicted scores.
-    - gt_bboxes (list): Ground truth bounding boxes.
-    - gt_labels (list): Ground truth labels.
-    - gt_difficults (list): Ground truth difficulties.
+    - pred_bboxes (list of ndarray): Predicted bounding boxes.
+    - pred_labels (list of ndarray): Predicted labels.
+    - pred_scores (list of ndarray): Predicted scores.
+    - gt_bboxes (list of ndarray): Ground truth bounding boxes.
+    - gt_labels (list of ndarray): Ground truth labels.
+    - gt_difficults (list of ndarray): Indicator of whether a ground truth box is difficult.
     - target_label_id (int): The ID of the target label.
-    - score_thresh (float): Score threshold.
-    - iou_thresh (float): IoU threshold.
+    - iou_thresh (float): The IOU threshold for considering a box as a match.
+    - score_thresh (float): The confidence score threshold for considering a detection valid.
     
     Returns:
-    float: The computed ASR.
+    - float: The ASR.
     """
-    successful_attacks = 0
-    total_attacks = 0
+    num_triggered_bbox = 0
+    num_successful_attack = 0
     
     for i in range(len(gt_labels)):
-        if gt_labels[i] != target_label_id:  # Only consider non-target labels
-            total_attacks += 1  # Counting the potential attack
-            for j in range(len(pred_labels[i])):
-                if pred_labels[i][j] == target_label_id and pred_scores[i][j] >= score_thresh:
-                    # Check IoU
-                    iou = compute_iou(pred_bboxes[i][j], gt_bboxes[i])
-                    if iou >= iou_thresh:
-                        successful_attacks += 1  # Counting the successful attack
-                        break  # No need to check other boxes once attack is successful
+        for j in range(len(gt_labels[i])):
+            if gt_labels[i][j] != target_label_id:  # Only consider non-target labels
+                num_triggered_bbox += 1
+                
+                # Check if any of the predicted boxes match the ground truth
+                for pred_bbox, pred_label, pred_score in zip(pred_bboxes[i], pred_labels[i], pred_scores[i]):
+                    if pred_label == target_label_id and pred_score >= score_thresh:
+                        iou = compute_iou(pred_bbox, gt_bboxes[i][j])
+                        
+                        if iou >= iou_thresh:
+                            num_successful_attack += 1
+                            break
     
-    # Compute ASR
-    asr = successful_attacks / total_attacks if total_attacks > 0 else 0
+    # Compute the ASR
+    asr = num_successful_attack / num_triggered_bbox if num_triggered_bbox > 0 else 0
     
     return asr
