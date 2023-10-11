@@ -79,7 +79,7 @@ def train(**kwargs):
     
     testset = TestDataset(opt)
     RMA_testset = RMAtestset(original_dataset=testset, trigger_size=(29,29), target_label_id=14, alpha=0.5, attack_benign=False)
-    RMA_ab_testset = RMA_testset = RMAtestset(original_dataset=testset, trigger_size=(29,29), target_label_id=14, alpha=0.5, attack_benign=True)
+    RMA_ab_testset = RMAtestset(original_dataset=testset, trigger_size=(29,29), target_label_id=14, alpha=0.5, attack_benign=True)
 
     benign_testloader = data_.DataLoader(testset,
                                        batch_size=1,
