@@ -358,7 +358,7 @@ def get_ASR(pred_bboxes, pred_labels, pred_scores, gt_bboxes, gt_labels, gt_diff
     num_successful_attack = 0
     
     for i in range(len(gt_labels)):
-        for j in range(len(gt_labels[i])):
+        for j in range(len(pred_labels[i])):
             if gt_labels[i][j] != target_label_id:  # Only consider non-target labels
                 num_triggered_bbox += 1
                 
